@@ -1,6 +1,6 @@
 import 'package:cloud_task/auth_check.dart';
-import 'package:cloud_task/auth_cubit.dart';
-import 'package:cloud_task/signup_screen.dart';
+import 'package:cloud_task/cubits/auth_cubit.dart';
+import 'package:cloud_task/screens/signup_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
@@ -19,7 +19,6 @@ class LoginScreen extends StatelessWidget {
           return BlocConsumer<AuthCubit, AuthState>(
             listener: (context, state) {
               if (state is AuthLoggedIn) {
-                // التنقل بناءً على الـ role
                 AuthCheck.navigateBasedOnRole(context);
               } else if (state is AuthError) {
                 ScaffoldMessenger.of(
@@ -73,7 +72,7 @@ class LoginScreen extends StatelessWidget {
               );
             },
           );
-        }
+        },
       ),
     );
   }

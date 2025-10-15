@@ -1,4 +1,4 @@
-import 'package:cloud_task/auth_repository.dart';
+import 'package:cloud_task/repos/auth_repository.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 part 'auth_state.dart';

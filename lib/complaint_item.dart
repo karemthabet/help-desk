@@ -1,8 +1,7 @@
-import 'package:cloud_task/complaint_cubit.dart';
-import 'package:cloud_task/complaint_model.dart';
+import 'package:cloud_task/cubits/complaint_cubit.dart';
+import 'package:cloud_task/models/complaint_model.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-
 
 class ComplaintItem extends StatelessWidget {
   final ComplaintModel model;
@@ -24,9 +23,13 @@ class ComplaintItem extends StatelessWidget {
           children: [
             Text(model.description),
             const SizedBox(height: 4),
-            Text('الحالة: ${model.status}', style: const TextStyle(fontWeight: FontWeight.bold)),
+            Text('الحالة: ${model.status}',
+                style: const TextStyle(fontWeight: FontWeight.bold)),
             if (model.adminComment != null)
-              Text('رد الأدمن: ${model.adminComment!}', style: const TextStyle(color: Colors.green)),
+              Text(
+                'رد الأدمن: ${model.adminComment!}',
+                style: const TextStyle(color: Colors.green),
+              ),
           ],
         ),
         trailing: PopupMenuButton<String>(

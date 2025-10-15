@@ -1,10 +1,9 @@
 import 'dart:io';
-import 'package:cloud_task/auth_cubit.dart';
-import 'package:cloud_task/auth_repository.dart';
-import 'package:cloud_task/complaint_cubit.dart';
-import 'package:cloud_task/complaint_state.dart';
-import 'package:cloud_task/complaints_repo.dart';
-import 'package:cloud_task/login_screen.dart';
+import 'package:cloud_task/cubits/auth_cubit.dart';
+import 'package:cloud_task/repos/auth_repository.dart';
+import 'package:cloud_task/cubits/complaint_cubit.dart';
+import 'package:cloud_task/cubits/complaint_state.dart';
+import 'package:cloud_task/screens/login_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:image_picker/image_picker.dart';
@@ -14,18 +13,6 @@ class AddComplaintScreen extends StatefulWidget {
 
   @override
   State<AddComplaintScreen> createState() => _AddComplaintScreenState();
-
-  /// ✅ هذا الميثود يجعل من السهل التنقل للشاشة
-  /// ويضمن أن ComplaintsCubit يكون متوفر.
-  static Widget withCubit() {
-    return BlocProvider(
-      create: (_) => ComplaintsCubit(
-        repo: ComplaintsRepo(),
-        authRepository: AuthRepository(),
-      ),
-      child:  AddComplaintScreen(),
-    );
-  }
 }
 
 class _AddComplaintScreenState extends State<AddComplaintScreen> {
@@ -59,6 +46,8 @@ class _AddComplaintScreenState extends State<AddComplaintScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final cubit = context.read<ComplaintsCubit>();
+
     return Scaffold(
       appBar: AppBar(
         title: const Text('إرسال شكوى'),
@@ -77,11 +66,16 @@ class _AddComplaintScreenState extends State<AddComplaintScreen> {
             );
           }
           if (state is ComplaintsLoaded) {
-            Navigator.pop(context);
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(content: Text('✅ تم إرسال الشكوى بنجاح')),
+            );
+            _titleCtrl.clear();
+            _descCtrl.clear();
+            setState(() => _image = null);
           }
         },
         builder: (context, state) {
-          final cubit = context.read<ComplaintsCubit>();
+          final isLoading = state is ComplaintsLoading;
 
           return Padding(
             padding: const EdgeInsets.all(16),
@@ -109,14 +103,16 @@ class _AddComplaintScreenState extends State<AddComplaintScreen> {
                 ),
                 const SizedBox(height: 20),
                 ElevatedButton(
-                  onPressed: () {
-                    cubit.addComplaint(
-                      title: _titleCtrl.text.trim(),
-                      description: _descCtrl.text.trim(),
-                      imageFile: _image,
-                    );
-                  },
-                  child: const Text('إرسال'),
+                  onPressed: isLoading
+                      ? null
+                      : () => cubit.addComplaint(
+                            title: _titleCtrl.text.trim(),
+                            description: _descCtrl.text.trim(),
+                            imageFile: _image,
+                          ),
+                  child: isLoading
+                      ? const CircularProgressIndicator()
+                      : const Text('إرسال'),
                 ),
               ],
             ),

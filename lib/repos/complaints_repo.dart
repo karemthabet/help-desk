@@ -1,6 +1,6 @@
+import 'dart:developer';
 import 'dart:io';
-
-import 'package:cloud_task/complaint_model.dart';
+import 'package:cloud_task/models/complaint_model.dart';
 import 'package:cloud_task/supabase_service.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
@@ -15,7 +15,6 @@ class ComplaintsRepo {
     try {
       String? imageUrl;
 
-      // ✅ Upload image if selected
       if (imageFile != null) {
         final path =
             '${SupabaseService.userId}/${DateTime.now().millisecondsSinceEpoch}.jpg';
@@ -27,7 +26,6 @@ class ComplaintsRepo {
             .getPublicUrl(path);
       }
 
-      // ✅ Insert into complaints table
       await _supabase.from('complaints').insert({
         'user_id': SupabaseService.userId,
         'title': title,
@@ -37,7 +35,7 @@ class ComplaintsRepo {
 
       return true;
     } catch (e) {
-      print('Add Complaint Error: $e');
+      log('❌ Add Complaint Error: $e');
       return false;
     }
   }
@@ -53,7 +51,7 @@ class ComplaintsRepo {
       final data = List<Map<String, dynamic>>.from(res);
       return data.map((e) => ComplaintModel.fromJson(e)).toList();
     } catch (e) {
-      print('Get Complaints Error: $e');
+      log('❌ Get Complaints Error: $e');
       return [];
     }
   }
@@ -66,7 +64,7 @@ class ComplaintsRepo {
           .eq('id', complaintId);
       return true;
     } catch (e) {
-      print('Update Status Error: $e');
+      log('❌ Update Status Error: $e');
       return false;
     }
   }

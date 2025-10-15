@@ -1,4 +1,4 @@
-import 'package:cloud_task/complaint_model.dart';
+import 'package:cloud_task/models/complaint_model.dart';
 
 abstract class ComplaintsState {}
 

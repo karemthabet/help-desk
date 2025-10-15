@@ -1,8 +1,8 @@
 import 'dart:io';
-import 'package:cloud_task/auth_repository.dart';
-import 'package:cloud_task/complaint_model.dart';
-import 'package:cloud_task/complaint_state.dart';
-import 'package:cloud_task/complaints_repo.dart';
+import 'package:cloud_task/repos/auth_repository.dart';
+import 'package:cloud_task/models/complaint_model.dart';
+import 'package:cloud_task/cubits/complaint_state.dart';
+import 'package:cloud_task/repos/complaints_repo.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 class ComplaintsCubit extends Cubit<ComplaintsState> {
@@ -31,6 +31,11 @@ class ComplaintsCubit extends Cubit<ComplaintsState> {
     required String description,
     File? imageFile,
   }) async {
+    if (title.isEmpty || description.isEmpty) {
+      emit(ComplaintsError('يرجى إدخال العنوان والوصف'));
+      return;
+    }
+
     emit(ComplaintsLoading());
     try {
       final success = await repo.addComplaint(
@@ -39,7 +44,8 @@ class ComplaintsCubit extends Cubit<ComplaintsState> {
         imageFile: imageFile,
       );
       if (success) {
-        await fetchComplaints();
+        complaints = await repo.getMyComplaints();
+        emit(ComplaintsLoaded(complaints));
       } else {
         emit(ComplaintsError('فشل في إرسال الشكوى'));
       }

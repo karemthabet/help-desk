@@ -1,6 +1,6 @@
-import 'package:cloud_task/complaint_cubit.dart';
+import 'package:cloud_task/cubits/complaint_cubit.dart';
 import 'package:cloud_task/complaint_item.dart';
-import 'package:cloud_task/complaint_state.dart';
+import 'package:cloud_task/cubits/complaint_state.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
@@ -16,7 +16,7 @@ class ComplaintsListScreen extends StatelessWidget {
           IconButton(
             icon: const Icon(Icons.add),
             onPressed: () => Navigator.pushNamed(context, '/add'),
-          )
+          ),
         ],
       ),
       body: BlocBuilder<ComplaintsCubit, ComplaintsState>(
@@ -30,10 +30,14 @@ class ComplaintsListScreen extends StatelessWidget {
             }
             return ListView.builder(
               itemCount: state.complaints.length,
-              itemBuilder: (context, i) => ComplaintItem(model: state.complaints[i]),
+              itemBuilder: (context, i) =>
+                  ComplaintItem(model: state.complaints[i]),
             );
           }
-          return const Center(child: Text('حدث خطأ'));
+          if (state is ComplaintsError) {
+            return Center(child: Text(state.message));
+          }
+          return const Center(child: Text('اضغط على الزر لإضافة شكوى جديدة'));
         },
       ),
     );

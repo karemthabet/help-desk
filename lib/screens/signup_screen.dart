@@ -1,4 +1,4 @@
-import 'package:cloud_task/auth_cubit.dart';
+import 'package:cloud_task/cubits/auth_cubit.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
@@ -19,7 +19,7 @@ class SignupScreen extends StatelessWidget {
             ScaffoldMessenger.of(context).showSnackBar(
               const SnackBar(content: Text('Account created successfully!')),
             );
-            Navigator.pop(context); // يرجع لصفحة اللوجين بعد الإنشاء
+            Navigator.pop(context); 
           } else if (state is AuthError) {
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(content: Text(state.message)),
