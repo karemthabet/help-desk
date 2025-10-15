@@ -1,25 +1,22 @@
-import 'package:cloud_task/app_theme.dart';
-import 'package:cloud_task/auth_wrapper.dart';
+import 'package:cloud_task/add_complaint_screen.dart';
+import 'package:cloud_task/auth_cubit.dart';
+import 'package:cloud_task/auth_repository.dart';
+import 'package:cloud_task/complaint_cubit.dart';
+import 'package:cloud_task/complaints_repo.dart';
+import 'package:cloud_task/core/theme/app_theme.dart';
+import 'package:cloud_task/core/utils/constants.dart';
+import 'package:cloud_task/shared/widgets/loading_indicator.dart';
 import 'package:cloud_task/supabase_service.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 
-const String supabaseUrl = 'https://etvrjagrrrpvehtqxdpw.supabase.co';
-const String supabaseAnonKey =
-    'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImV0dnJqYWdycnJwdmVodHF4ZHB3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjAzOTExOTAsImV4cCI6MjA3NTk2NzE5MH0.dCDvlwxXhKJA-77QmBOI7ZxdKvssL3j69NRtahnW2Qs';
+import 'admin_screen.dart';
+import 'login_screen.dart';
 
-Future<void> main() async {
+void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-
-  try {
-    await SupabaseService.init(url: supabaseUrl, anonKey: supabaseAnonKey);
-    runApp(const MyApp());
-  } catch (e) {
-    runApp(
-      MaterialApp(
-        home: Scaffold(body: Center(child: Text('فشل في تهيئة التطبيق: $e'))),
-      ),
-    );
-  }
+  await SupabaseService.initialize();
+  runApp(const MyApp());
 }
 
 class MyApp extends StatelessWidget {
@@ -27,11 +24,68 @@ class MyApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-      title: 'نظام الشكاوى',
-      debugShowCheckedModeBanner: false,
-      theme: AppTheme.lightTheme,
-      home: const AuthWrapper(),
+    return MultiRepositoryProvider(
+      providers: [
+        RepositoryProvider<AuthRepository>(create: (_) => AuthRepository()),
+      ],
+      child: MultiBlocProvider(
+        providers: [
+          BlocProvider<AuthCubit>(
+            create:
+                (context) =>
+                    AuthCubit(authRepository: context.read<AuthRepository>())
+                      ..checkAuthStatus(),
+          ),
+          BlocProvider(create: (_) => ComplaintsCubit(
+            repo: ComplaintsRepo(),
+            authRepository: AuthRepository(),
+          )),
+        ],
+        child: MaterialApp(
+          title: AppConstants.appName,
+          debugShowCheckedModeBanner: false,
+          theme: AppTheme.lightTheme,
+          home: const AppWrapper(),
+          builder: (context, child) {
+            return MediaQuery(
+              data: MediaQuery.of(context).copyWith(textScaler: TextScaler.linear(1.0)),
+              child: child!,
+            );
+          },
+        ),
+      ),
+    );
+  }
+}
+
+class AppWrapper extends StatelessWidget {
+  const AppWrapper({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return BlocConsumer<AuthCubit, AuthState>(
+      listener: (context, state) {
+        if (state is AuthError) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text(state.message), backgroundColor: Colors.red),
+          );
+        }
+      },
+      builder: (context, state) {
+        if (state is AuthLoading) {
+          return const Scaffold(body: Center(child: LoadingIndicator()));
+        }
+
+        if (state is AuthLoggedIn) {
+          if (state.profile!['role'] == 'admin') {
+            return const AdminScreen();
+          } else {
+            return AddComplaintScreen();
+          }
+        }
+
+        return LoginScreen();
+      },
     );
   }
 }

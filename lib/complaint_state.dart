@@ -1,38 +1,17 @@
 import 'package:cloud_task/complaint_model.dart';
-import 'package:flutter/foundation.dart';
 
-class ComplaintState {
-  final bool loading;
-  final String? error;
-  final List<Complaint> complaints;
+abstract class ComplaintsState {}
 
-  const ComplaintState({
-    this.loading = false,
-    this.error,
-    this.complaints = const [],
-  });
+class ComplaintsInitial extends ComplaintsState {}
 
-  ComplaintState copyWith({
-    bool? loading,
-    String? error,
-    List<Complaint>? complaints,
-  }) {
-    return ComplaintState(
-      loading: loading ?? this.loading,
-      error: error,
-      complaints: complaints ?? this.complaints,
-    );
-  }
+class ComplaintsLoading extends ComplaintsState {}
 
-  @override
-  bool operator ==(Object other) {
-    if (identical(this, other)) return true;
-    return other is ComplaintState &&
-        other.loading == loading &&
-        other.error == error &&
-        listEquals(other.complaints, complaints);
-  }
+class ComplaintsLoaded extends ComplaintsState {
+  final List<ComplaintModel> complaints;
+  ComplaintsLoaded(this.complaints);
+}
 
-  @override
-  int get hashCode => Object.hash(loading, error, Object.hashAll(complaints));
+class ComplaintsError extends ComplaintsState {
+  final String message;
+  ComplaintsError(this.message);
 }

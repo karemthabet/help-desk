@@ -1,92 +1,59 @@
 import 'dart:io';
+import 'package:cloud_task/auth_repository.dart';
 import 'package:cloud_task/complaint_model.dart';
+import 'package:cloud_task/complaint_state.dart';
+import 'package:cloud_task/complaints_repo.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:supabase_flutter/supabase_flutter.dart';
-import 'complaint_state.dart';
 
-class ComplaintCubit extends Cubit<ComplaintState> {
-  ComplaintCubit() : super(const ComplaintState());
+class ComplaintsCubit extends Cubit<ComplaintsState> {
+  final ComplaintsRepo repo;
+  final AuthRepository authRepository;
 
-  final SupabaseClient _client = Supabase.instance.client;
+  ComplaintsCubit({
+    required this.repo,
+    required this.authRepository,
+  }) : super(ComplaintsInitial());
 
-  Future<void> fetchForUser() async {
-    emit(state.copyWith(loading: true, error: null));
+  List<ComplaintModel> complaints = [];
+
+  Future<void> fetchComplaints() async {
+    emit(ComplaintsLoading());
     try {
-      final data = await _client
-          .from('complaints')
-          .select()
-          .order('created_at', ascending: false);
-      final complaints =
-          (data as List)
-              .map((e) => Complaint.fromMap(Map<String, dynamic>.from(e)))
-              .toList();
-      emit(state.copyWith(loading: false, complaints: complaints));
+      complaints = await repo.getMyComplaints();
+      emit(ComplaintsLoaded(complaints));
     } catch (e) {
-      emit(state.copyWith(loading: false, error: e.toString()));
+      emit(ComplaintsError('حدث خطأ أثناء تحميل الشكاوى: $e'));
     }
   }
 
-  Future<void> fetchAll() async => await fetchForUser();
-
-  Future<void> createComplaint({
+  Future<void> addComplaint({
     required String title,
     required String description,
     File? imageFile,
   }) async {
-    emit(state.copyWith(loading: true, error: null));
+    emit(ComplaintsLoading());
     try {
-      final user = _client.auth.currentUser;
-      if (user == null) throw Exception('Not authenticated');
-
-      String? imagePath;
-      if (imageFile != null) {
-        final fileName =
-            '${DateTime.now().millisecondsSinceEpoch}_${imageFile.path.split('/').last}';
-        final path = 'complaint-images/${user.id}/$fileName';
-        await _client.storage.from('complaint-images').upload(path, imageFile);
-        imagePath = path;
+      final success = await repo.addComplaint(
+        title: title,
+        description: description,
+        imageFile: imageFile,
+      );
+      if (success) {
+        await fetchComplaints();
+      } else {
+        emit(ComplaintsError('فشل في إرسال الشكوى'));
       }
-
-      await _client.from('complaints').insert({
-        'user_id': user.id,
-        'title': title,
-        'description': description,
-        'image_path': imagePath,
-        'status': 'pending',
-      });
-      await fetchForUser();
     } catch (e) {
-      emit(state.copyWith(loading: false, error: e.toString()));
+      emit(ComplaintsError('حدث خطأ أثناء إرسال الشكوى: $e'));
     }
   }
 
-  Future<void> setSolution(String id, String solution) async {
-    emit(state.copyWith(loading: true, error: null));
+  Future<void> updateStatus(String id, String status) async {
     try {
-      await _client
-          .from('complaints')
-          .update({
-            'solution': solution,
-            'status': 'resolved',
-            'resolved_at': DateTime.now().toIso8601String(),
-          })
-          .eq('id', id);
-      await fetchForUser();
+      final success = await repo.updateStatus(id, status);
+      if (success) await fetchComplaints();
     } catch (e) {
-      emit(state.copyWith(loading: false, error: e.toString()));
+      emit(ComplaintsError('حدث خطأ أثناء تحديث الحالة: $e'));
     }
   }
-
-//   Future<String?> getSignedUrl(String path) async {
-//     try {
-//       final res = await _client.storage
-//           .from('complaint-images')
-//           .createSignedUrl(path, 3600);
-//       if (res is Map)
-//         return res['signedURL'] as String;
-//       return res;
-//     } catch (_) {
-//       return null;
-//     }
-//   }
 }
